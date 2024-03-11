@@ -1,0 +1,2 @@
+# HybridCLR_ProtoType
+HybridCLR结合Addressable进行C#代码热更的原型，已测试安卓和Windows
