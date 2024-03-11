@@ -155,9 +155,15 @@ namespace AOT
         private IEnumerator LoadMetadataForAOTAssemblies()
         {
             var aotAssemblies = GetMetaDataDllToLoad();
+            if (aotAssemblies == null)
+            {
+                yield break;
+            }
             
             foreach (var aotDllName in aotAssemblies)
             {
+                if(string.IsNullOrEmpty(aotDllName))
+                    continue;
                 var path = $"{META_DATA_DLL_PATH}{aotDllName}.bytes";
                 ReadDllBytes(path);
                 if (_dllBytes != null)
@@ -168,12 +174,11 @@ namespace AOT
             }
 
             Debug.Log("LoadMetadataForAOTAssemblies finish!");
-            yield break;
         }
 
         private string[] GetMetaDataDllToLoad()
         {
-            string[] result = new []{""};
+            string[] result = null;
             var metaDataToLoad = _assetManager.LoadAsset<TextAsset>(META_DATA_DLLS_TO_LOAD_PATH);
             if (metaDataToLoad == null)
             {
