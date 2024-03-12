@@ -74,4 +74,6 @@ crashlytics-build.properties
 
 /.idea
 /ServerData
-/HybridCLRGenerate
+/Assets/HybridCLRGenerate
+Assets/HybridCLRGenerate.meta
+Assets/HotUpdateDlls/

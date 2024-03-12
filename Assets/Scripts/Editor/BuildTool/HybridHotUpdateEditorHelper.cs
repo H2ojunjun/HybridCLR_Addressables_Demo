@@ -113,7 +113,12 @@ namespace BuildTool
 
             var metaDataDllListStr = string.Join(META_DATA_DLL_SEPARATOR, assemblies);
             if (!File.Exists(META_DATA_DLLS_TO_LOAD_PATH))
-                File.Create(META_DATA_DLLS_TO_LOAD_PATH);
+            {
+                using (File.Create(META_DATA_DLLS_TO_LOAD_PATH))
+                {
+                }
+            }
+
             File.WriteAllText(META_DATA_DLLS_TO_LOAD_PATH, metaDataDllListStr, Encoding.UTF8);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -184,7 +189,11 @@ namespace BuildTool
                 (a, b) => b.sequence.CompareTo(a.sequence));
             var json = JsonUtility.ToJson(runtimeInitializeOnLoadMethodCollection, true);
             if (!File.Exists(RUN_TIME_INITIALIZE_ON_LOAD_METHOD_COLLECTION_PATH))
-                File.Create(RUN_TIME_INITIALIZE_ON_LOAD_METHOD_COLLECTION_PATH);
+            {
+                using (File.Create(RUN_TIME_INITIALIZE_ON_LOAD_METHOD_COLLECTION_PATH))
+                {
+                }
+            }
             File.WriteAllText(RUN_TIME_INITIALIZE_ON_LOAD_METHOD_COLLECTION_PATH, json, Encoding.UTF8);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
