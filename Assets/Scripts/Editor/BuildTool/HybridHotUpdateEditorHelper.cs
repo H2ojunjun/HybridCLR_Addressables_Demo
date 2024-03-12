@@ -143,7 +143,7 @@ namespace BuildTool
 
             return result;
         }
-
+        
         private static void CollectRuntimeInitializeOnLoadMethod()
         {
             RuntimeInitializeOnLoadMethodCollection runtimeInitializeOnLoadMethodCollection = new();
@@ -159,16 +159,18 @@ namespace BuildTool
 
                 foreach (var type in assembly.GetTypes())
                 {
-                    foreach (var method in type.GetMethods(BindingFlags.Static & (BindingFlags.Public |
-                                 BindingFlags.NonPublic)))
+                    foreach (var method in type.GetMethods(BindingFlags.Static | BindingFlags.Public |
+                                                           BindingFlags.NonPublic))
                     {
+                        if(!method.IsStatic)
+                            continue;
                         var attribute =
                             method.GetCustomAttribute(runtimeInitializedAttributeType) as
                                 RuntimeInitializeOnLoadMethodAttribute;
                         if (attribute == null)
                             continue;
                         var sequence = (int)attribute.loadType;
-                        var methodInfo = new MethodExecutionInfo(assemblyName, type.Name, method.Name, sequence);
+                        var methodInfo = new MethodExecutionInfo(assemblyName, type.FullName, method.Name, sequence);
                         runtimeInitializeOnLoadMethodCollection.methodExecutionInfos.Add(methodInfo);
                     }
                 }
@@ -176,7 +178,7 @@ namespace BuildTool
 
             runtimeInitializeOnLoadMethodCollection.methodExecutionInfos.Sort(
                 (a, b) => b.sequence.CompareTo(a.sequence));
-            var json = JsonUtility.ToJson(runtimeInitializeOnLoadMethodCollection);
+            var json = JsonUtility.ToJson(runtimeInitializeOnLoadMethodCollection, true);
             if (!File.Exists(RUN_TIME_INITIALIZE_ON_LOAD_METHOD_COLLECTION_PATH))
                 File.Create(RUN_TIME_INITIALIZE_ON_LOAD_METHOD_COLLECTION_PATH);
             File.WriteAllText(RUN_TIME_INITIALIZE_ON_LOAD_METHOD_COLLECTION_PATH, json, Encoding.UTF8);
