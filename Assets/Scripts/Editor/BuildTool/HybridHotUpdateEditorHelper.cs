@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using AOT;
 using HybridCLR.Editor;
@@ -19,7 +21,6 @@ namespace BuildTool
 
         const string META_DATA_DLL_PATH = "/../HybridCLRData/AssembliesPostIl2CppStrip/";
         const string META_DATA_DESTINATION_PATH = "/HotUpdateDlls/MetaDataDll/";
-        const string META_DATA_DLLS_TO_LOAD_PATH = "Assets/HotUpdateDlls/MetaDataDllToLoad.txt";
 
         const string AOT_GENERIC_REFERENCES_PATH = "/HybridCLRGenerate/AOTGenericReferences.cs";
 
@@ -36,6 +37,9 @@ namespace BuildTool
             PrebuildCommand.GenerateAll();
             CopyHotUpdateDll();
             CopyMetaDataDll();
+            CollectRuntimeInitializeOnLoadMethod();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
         }
 
         /// <summary>
@@ -84,14 +88,14 @@ namespace BuildTool
                 }
             }
 
-            AssetDatabase.Refresh();
             Debug.Log("copy hot update dlls success!");
         }
 
         private static void CopyMetaDataDll()
         {
             List<string> assemblies = GetMetaDataDllList();
-            var dir = new DirectoryInfo(Application.dataPath + META_DATA_DLL_PATH + EditorUserBuildSettings.activeBuildTarget);
+            var dir = new DirectoryInfo(Application.dataPath + META_DATA_DLL_PATH +
+                                        EditorUserBuildSettings.activeBuildTarget);
             var files = dir.GetFiles();
             var destDir = Application.dataPath + META_DATA_DESTINATION_PATH;
             Directory.Delete(destDir, true);
@@ -109,7 +113,6 @@ namespace BuildTool
             if (!File.Exists(META_DATA_DLLS_TO_LOAD_PATH))
                 File.Create(META_DATA_DLLS_TO_LOAD_PATH);
             File.WriteAllText(META_DATA_DLLS_TO_LOAD_PATH, metaDataDllListStr, Encoding.UTF8);
-            AssetDatabase.Refresh();
             Debug.Log("copy meta data dll success!");
         }
 
@@ -139,6 +142,44 @@ namespace BuildTool
             }
 
             return result;
+        }
+
+        private static void CollectRuntimeInitializeOnLoadMethod()
+        {
+            RuntimeInitializeOnLoadMethodCollection runtimeInitializeOnLoadMethodCollection = new();
+            var hotUpdateAssemblies = SettingsUtil.HotUpdateAssemblyNamesExcludePreserved;
+            var runtimeInitializedAttributeType = typeof(RuntimeInitializeOnLoadMethodAttribute);
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var assemblyName = assembly.GetName().Name;
+                if (!hotUpdateAssemblies.Contains(assemblyName))
+                {
+                    continue;
+                }
+
+                foreach (var type in assembly.GetTypes())
+                {
+                    foreach (var method in type.GetMethods(BindingFlags.Static & (BindingFlags.Public |
+                                 BindingFlags.NonPublic)))
+                    {
+                        var attribute =
+                            method.GetCustomAttribute(runtimeInitializedAttributeType) as
+                                RuntimeInitializeOnLoadMethodAttribute;
+                        if (attribute == null)
+                            continue;
+                        var sequence = (int)attribute.loadType;
+                        var methodInfo = new MethodExecutionInfo(assemblyName, type.Name, method.Name, sequence);
+                        runtimeInitializeOnLoadMethodCollection.methodExecutionInfos.Add(methodInfo);
+                    }
+                }
+            }
+
+            runtimeInitializeOnLoadMethodCollection.methodExecutionInfos.Sort(
+                (a, b) => b.sequence.CompareTo(a.sequence));
+            var json = JsonUtility.ToJson(runtimeInitializeOnLoadMethodCollection);
+            if (!File.Exists(RUN_TIME_INITIALIZE_ON_LOAD_METHOD_COLLECTION_PATH))
+                File.Create(RUN_TIME_INITIALIZE_ON_LOAD_METHOD_COLLECTION_PATH);
+            File.WriteAllText(RUN_TIME_INITIALIZE_ON_LOAD_METHOD_COLLECTION_PATH, json, Encoding.UTF8);
         }
     }
 }

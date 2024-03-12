@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace AOT
 {
@@ -15,19 +16,59 @@ namespace AOT
     public partial class GameLauncher : MonoBehaviour
     {
         #region Inner Class
-
-        private class MethodExecutionInfo
+        
+        [Serializable]
+        public class MethodExecutionInfo
         {
-            public MethodInfo method;
-            public int sequence;
+            public string assemblyName;
 
-            public MethodExecutionInfo(MethodInfo method, int sequence)
+            public string typeName;
+            
+            public string methodName;
+            
+            public int sequence;
+            
+            public MethodExecutionInfo(string assemblyName, string typeName, string methodName, int sequence)
             {
-                this.method = method;
+                this.assemblyName = assemblyName;
+                this.typeName = typeName;
+                this.methodName = methodName;
                 this.sequence = sequence;
+            }
+
+            public void Execute()
+            {
+                var assembly = FindObjectOfType<GameLauncher>().GetAssembly(assemblyName);
+                if (assembly == null)
+                {
+                    Debug.LogError($"cant find assembly,name:{assemblyName}");
+                    return;
+                }
+
+                var type = assembly.GetType(typeName);
+                if (type == null)
+                {
+                    Debug.LogError($"cant find type,name:{typeName}");
+                    return;
+                }
+
+                var method = type.GetMethod(methodName, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                if (method == null)
+                {
+                    Debug.LogError($"cant find method,name:{methodName}");
+                    return;
+                }
+
+                method.Invoke(null, null);
             }
         }
 
+        [Serializable]
+        public class RuntimeInitializeOnLoadMethodCollection
+        {
+            public List<MethodExecutionInfo> methodExecutionInfos = new List<MethodExecutionInfo>();
+        }
+        
         #endregion
 
         #region FieldsAndProperties
@@ -37,14 +78,14 @@ namespace AOT
         const string META_DATA_DLL_PATH = "Assets/HotUpdateDlls/MetaDataDll/";
         const string HOT_UPDATE_DLL_PATH = "Assets/HotUpdateDlls/HotUpdateDll/";
         const string GAMEPLAY_DLL_NAME = "GamePlay.dll";
-        const string META_DATA_DLLS_TO_LOAD_PATH = "Assets/HotUpdateDlls/MetaDataDllToLoad.txt";
-
+        public const string META_DATA_DLLS_TO_LOAD_PATH = "Assets/HotUpdateDlls/MetaDataDllToLoad.txt";
+        public const string RUN_TIME_INITIALIZE_ON_LOAD_METHOD_COLLECTION_PATH = "Assets/HotUpdateDlls/RuntimeInitializeOnLoadMethodCollection.txt";
+        public const string META_DATA_DLL_SEPARATOR = "!";
+        
         private Coroutine _launchCoroutine;
         private byte[] _dllBytes;
 
         private Dictionary<string, Assembly> _allHotUpdateAssemblies = new();
-
-        public const string META_DATA_DLL_SEPARATOR = "!";
 
         ///GamePlay程序集依赖的热更程序集，这些程序集要先于gameplay程序集加载，需要手动填写
         private readonly List<string> _gamePlayDependencyDlls = new List<string>()
@@ -60,7 +101,7 @@ namespace AOT
         private UIVersionUpdate _versionUpdateUI;
 
         public bool enableHybridCLR = true;
-
+        
         #endregion
 
         #region MainLife
@@ -227,44 +268,51 @@ namespace AOT
         /// </summary>
         private void ExecuteRuntimeInitializeOnLoadMethodAttribute()
         {
-            var runtimeInitializedAttributeType = typeof(RuntimeInitializeOnLoadMethodAttribute);
-            List<MethodExecutionInfo> runtimeMethods = new();
-            foreach (var assemblyName in _hasRuntimeInitializeOnLoadMethodAssemblies)
+            // var runtimeInitializedAttributeType = typeof(RuntimeInitializeOnLoadMethodAttribute);
+            // List<MethodExecutionInfo> runtimeMethods = new();
+            // foreach (var assemblyName in _hasRuntimeInitializeOnLoadMethodAssemblies)
+            // {
+            //     var assembly = GetAssembly(assemblyName);
+            //     if (assembly == null)
+            //     {
+            //         Debug.LogError($"cant find assembly,name:{assemblyName}");
+            //         continue;
+            //     }
+            //
+            //     foreach (var type in assembly.GetTypes())
+            //     {
+            //         foreach (var method in type.GetMethods(BindingFlags.Static | BindingFlags.Public |
+            //                                                BindingFlags.NonPublic))
+            //         {
+            //             if (!method.IsStatic)
+            //                 return;
+            //             var attribute =
+            //                 method.GetCustomAttribute(runtimeInitializedAttributeType) as
+            //                     RuntimeInitializeOnLoadMethodAttribute;
+            //             if (attribute == null)
+            //                 return;
+            //             var sequence = (int)attribute.loadType;
+            //             var methodInfo = new MethodExecutionInfo(method, sequence);
+            //             runtimeMethods.Add(methodInfo);
+            //         }
+            //     }
+            // }
+            //
+            // runtimeMethods.Sort((a, b) => b.sequence.CompareTo(a.sequence));
+            // foreach (var methodInfo in runtimeMethods)
+            // {
+            //     Debug.Log($"call method methodName:{methodInfo.method.Name} sequence:{methodInfo.sequence}");
+            //     methodInfo.method.Invoke(null, null);
+            // }
+            var runtimeInitializeOnLoadMethodCollection = _assetManager.LoadAsset<TextAsset>(RUN_TIME_INITIALIZE_ON_LOAD_METHOD_COLLECTION_PATH);
+            var json = runtimeInitializeOnLoadMethodCollection.text;
+            var collection = JsonUtility.FromJson<RuntimeInitializeOnLoadMethodCollection>(json);
+            foreach (var methodInfo in collection.methodExecutionInfos)
             {
-                var assembly = GetAssembly(assemblyName);
-                if (assembly == null)
-                {
-                    Debug.LogError($"cant find assembly,name:{assemblyName}");
-                    continue;
-                }
-
-                foreach (var type in assembly.GetTypes())
-                {
-                    foreach (var method in type.GetMethods(BindingFlags.Static | BindingFlags.Public |
-                                                           BindingFlags.NonPublic))
-                    {
-                        if (!method.IsStatic)
-                            return;
-                        var attribute =
-                            method.GetCustomAttribute(runtimeInitializedAttributeType) as
-                                RuntimeInitializeOnLoadMethodAttribute;
-                        if (attribute == null)
-                            return;
-                        var sequence = (int)attribute.loadType;
-                        var methodInfo = new MethodExecutionInfo(method, sequence);
-                        runtimeMethods.Add(methodInfo);
-                    }
-                }
+                methodInfo.Execute();
             }
-
-            runtimeMethods.Sort((a, b) => b.sequence.CompareTo(a.sequence));
-            foreach (var methodInfo in runtimeMethods)
-            {
-                Debug.Log($"call method methodName:{methodInfo.method.Name} sequence:{methodInfo.sequence}");
-                methodInfo.method.Invoke(null, null);
-            }
-
-            Debug.Log("RuntimeInitializeOnLoadMethod finish!");
+            
+            Debug.Log("execute RuntimeInitializeOnLoadMethod finish!");
         }
 
         private void ReadDllBytes(string path)
