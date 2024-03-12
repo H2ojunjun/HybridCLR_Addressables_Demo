@@ -264,46 +264,10 @@ namespace AOT
         #region Other
 
         /// <summary>
-        /// 反射执行被RuntimeInitializeOnLoadMethod attribute标注的函数，HybirdCLR不支持该attribute
+        /// 反射执行被RuntimeInitializeOnLoadMethod attribute标注的函数，HybridCLR不支持该attribute
         /// </summary>
         private void ExecuteRuntimeInitializeOnLoadMethodAttribute()
         {
-            // var runtimeInitializedAttributeType = typeof(RuntimeInitializeOnLoadMethodAttribute);
-            // List<MethodExecutionInfo> runtimeMethods = new();
-            // foreach (var assemblyName in _hasRuntimeInitializeOnLoadMethodAssemblies)
-            // {
-            //     var assembly = GetAssembly(assemblyName);
-            //     if (assembly == null)
-            //     {
-            //         Debug.LogError($"cant find assembly,name:{assemblyName}");
-            //         continue;
-            //     }
-            //
-            //     foreach (var type in assembly.GetTypes())
-            //     {
-            //         foreach (var method in type.GetMethods(BindingFlags.Static | BindingFlags.Public |
-            //                                                BindingFlags.NonPublic))
-            //         {
-            //             if (!method.IsStatic)
-            //                 return;
-            //             var attribute =
-            //                 method.GetCustomAttribute(runtimeInitializedAttributeType) as
-            //                     RuntimeInitializeOnLoadMethodAttribute;
-            //             if (attribute == null)
-            //                 return;
-            //             var sequence = (int)attribute.loadType;
-            //             var methodInfo = new MethodExecutionInfo(method, sequence);
-            //             runtimeMethods.Add(methodInfo);
-            //         }
-            //     }
-            // }
-            //
-            // runtimeMethods.Sort((a, b) => b.sequence.CompareTo(a.sequence));
-            // foreach (var methodInfo in runtimeMethods)
-            // {
-            //     Debug.Log($"call method methodName:{methodInfo.method.Name} sequence:{methodInfo.sequence}");
-            //     methodInfo.method.Invoke(null, null);
-            // }
             var runtimeInitializeOnLoadMethodCollection = _assetManager.LoadAsset<TextAsset>(RUN_TIME_INITIALIZE_ON_LOAD_METHOD_COLLECTION_PATH);
             var json = runtimeInitializeOnLoadMethodCollection.text;
             var collection = JsonUtility.FromJson<RuntimeInitializeOnLoadMethodCollection>(json);

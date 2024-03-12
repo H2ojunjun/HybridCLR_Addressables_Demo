@@ -8,7 +8,12 @@ namespace GamePlay
     public class GameMain : MonoBehaviour
     {
         public int fontSize = 15;
-        
+
+        private void Awake()
+        {
+            GameTest.Instance.Test();
+        }
+
         private void OnGUI()
         {
             GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity,
