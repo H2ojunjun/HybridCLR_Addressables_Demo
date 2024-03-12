@@ -1,0 +1,16 @@
+﻿{
+    "methodExecutionInfos": [
+        {
+            "assemblyName": "GamePlay",
+            "typeName": "GamePlay.GameTest",
+            "methodName": "TestRuntimeInitialize2",
+            "sequence": 2
+        },
+        {
+            "assemblyName": "GamePlay",
+            "typeName": "GamePlay.GameTest",
+            "methodName": "TestRuntimeInitialize1",
+            "sequence": 1
+        }
+    ]
+}
