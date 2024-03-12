@@ -92,11 +92,6 @@ namespace AOT
         {
         };
 
-        //热更程序集中所有使用了RuntimeInitializeOnLoadMethod attribute的程序集，需要手动填写,HybridCLR不支持该特性
-        private readonly List<string> _hasRuntimeInitializeOnLoadMethodAssemblies = new List<string>()
-        {
-        };
-
         private IAssetManager _assetManager = new AddressableAssetManager();
         private UIVersionUpdate _versionUpdateUI;
 

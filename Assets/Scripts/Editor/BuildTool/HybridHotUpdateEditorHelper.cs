@@ -38,8 +38,6 @@ namespace BuildTool
             CopyHotUpdateDll();
             CopyMetaDataDll();
             CollectRuntimeInitializeOnLoadMethod();
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
         }
 
         /// <summary>
@@ -89,6 +87,8 @@ namespace BuildTool
                 }
             }
 
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
             Debug.Log("copy hot update dlls success!");
         }
 
@@ -115,6 +115,8 @@ namespace BuildTool
             if (!File.Exists(META_DATA_DLLS_TO_LOAD_PATH))
                 File.Create(META_DATA_DLLS_TO_LOAD_PATH);
             File.WriteAllText(META_DATA_DLLS_TO_LOAD_PATH, metaDataDllListStr, Encoding.UTF8);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
             Debug.Log("copy meta data dll success!");
         }
 
@@ -184,6 +186,8 @@ namespace BuildTool
             if (!File.Exists(RUN_TIME_INITIALIZE_ON_LOAD_METHOD_COLLECTION_PATH))
                 File.Create(RUN_TIME_INITIALIZE_ON_LOAD_METHOD_COLLECTION_PATH);
             File.WriteAllText(RUN_TIME_INITIALIZE_ON_LOAD_METHOD_COLLECTION_PATH, json, Encoding.UTF8);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
         }
     }
 }
