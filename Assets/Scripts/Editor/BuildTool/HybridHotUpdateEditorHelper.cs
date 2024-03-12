@@ -77,7 +77,8 @@ namespace BuildTool
                                         EditorUserBuildSettings.activeBuildTarget);
             var files = dir.GetFiles();
             var destDir = Application.dataPath + HOT_UPDATE_DESTINATION_PATH;
-            Directory.Delete(destDir, true);
+            if (Directory.Exists(destDir))
+                Directory.Delete(destDir, true);
             Directory.CreateDirectory(destDir);
             foreach (var file in files)
             {
@@ -98,7 +99,8 @@ namespace BuildTool
                                         EditorUserBuildSettings.activeBuildTarget);
             var files = dir.GetFiles();
             var destDir = Application.dataPath + META_DATA_DESTINATION_PATH;
-            Directory.Delete(destDir, true);
+            if (Directory.Exists(destDir))
+                Directory.Delete(destDir, true);
             Directory.CreateDirectory(destDir);
             foreach (var file in files)
             {
@@ -143,7 +145,7 @@ namespace BuildTool
 
             return result;
         }
-        
+
         private static void CollectRuntimeInitializeOnLoadMethod()
         {
             RuntimeInitializeOnLoadMethodCollection runtimeInitializeOnLoadMethodCollection = new();
@@ -162,7 +164,7 @@ namespace BuildTool
                     foreach (var method in type.GetMethods(BindingFlags.Static | BindingFlags.Public |
                                                            BindingFlags.NonPublic))
                     {
-                        if(!method.IsStatic)
+                        if (!method.IsStatic)
                             continue;
                         var attribute =
                             method.GetCustomAttribute(runtimeInitializedAttributeType) as
