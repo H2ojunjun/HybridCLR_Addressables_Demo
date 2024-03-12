@@ -171,6 +171,7 @@ namespace AOT
         private IEnumerator Download()
         {
             yield return _assetManager.DownloadAssets();
+            _versionUpdateUI.GetDownloadProgress = null;
         }
 
         private IEnumerator LoadAssemblies()
