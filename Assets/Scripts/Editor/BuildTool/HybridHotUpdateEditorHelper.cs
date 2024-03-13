@@ -6,6 +6,7 @@ using System.Text;
 using AOT;
 using HybridCLR.Editor;
 using HybridCLR.Editor.Commands;
+using HybridCLR.Editor.HotUpdate;
 using HybridCLR.Editor.Installer;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -16,27 +17,48 @@ namespace BuildTool
 {
     public static class HybridHotUpdateEditorHelper
     {
-        const string HOT_UPDATE_DLL_PATH = "/../HybridCLRData/HotUpdateDlls/";
-        const string HOT_UPDATE_DESTINATION_PATH = "/HotUpdateDlls/HotUpdateDll/";
+        static string HotUpdateDllPath => $"{Application.dataPath}/../HybridCLRData/HotUpdateDlls/{EditorUserBuildSettings.activeBuildTarget}/";
 
-        const string META_DATA_DLL_PATH = "/../HybridCLRData/AssembliesPostIl2CppStrip/";
-        const string META_DATA_DESTINATION_PATH = "/HotUpdateDlls/MetaDataDll/";
+        static string HotUpdateDestinationPath => $"{Application.dataPath}/HotUpdateDlls/HotUpdateDll/";
 
-        const string AOT_GENERIC_REFERENCES_PATH = "/HybridCLRGenerate/AOTGenericReferences.cs";
+        static string MetaDataDLLPath => $"{Application.dataPath}/../HybridCLRData/AssembliesPostIl2CppStrip/{EditorUserBuildSettings.activeBuildTarget}/";
 
-        const string GameLauncherSceneName = "Assets/Scenes/GameLauncher.unity";
+        static string MetaDataDestinationPath => $"{Application.dataPath}/HotUpdateDlls/MetaDataDll/";
+
+        static string AOTGenericReferencesPath => $"{Application.dataPath}/HybridCLRGenerate/AOTGenericReferences.cs";
+
+        static string GameLauncherSceneName => "Assets/Scenes/GameLauncher.unity";
+
+        static string BuildDataPath => $"{Application.dataPath}/../BuildData/";
+
+        static string CurrPlatformBuildDataPath => $"{BuildDataPath}{EditorUserBuildSettings.activeBuildTarget}/";
 
         /// <summary>
         /// 执行一次HybridCLR的generate all，并将生成的dll拷贝到assets中
         /// </summary>
-        public static void BuildHotUpdateDlls()
+        public static void BuildHotUpdateDlls(bool isBuildPlayer)
         {
+            //如果未安装，安装
             var controller = new InstallerController();
             if (!controller.HasInstalledHybridCLR())
                 controller.InstallDefaultHybridCLR();
+            
+            //执行HybridCLR
             PrebuildCommand.GenerateAll();
+            
+            //如果是更新，则检查热更代码中是否引用了被裁减的AOT代码
+            if (!isBuildPlayer)
+                if (!CheckAccessMissingMetadata())
+                    return;
+            //拷贝dll
             CopyHotUpdateDll();
             CopyMetaDataDll();
+            
+            //如果是发包，则拷贝AOT dll
+            if (isBuildPlayer)
+                CopyAotDllsForStripCheck();
+            
+            //收集RuntimeInitializeOnLoadMethod
             CollectRuntimeInitializeOnLoadMethod();
         }
 
@@ -71,10 +93,9 @@ namespace BuildTool
         private static void CopyHotUpdateDll()
         {
             var assemblies = SettingsUtil.HotUpdateAssemblyNamesExcludePreserved;
-            var dir = new DirectoryInfo(Application.dataPath + HOT_UPDATE_DLL_PATH +
-                                        EditorUserBuildSettings.activeBuildTarget);
+            var dir = new DirectoryInfo(HotUpdateDllPath);
             var files = dir.GetFiles();
-            var destDir = Application.dataPath + HOT_UPDATE_DESTINATION_PATH;
+            var destDir = HotUpdateDestinationPath;
             if (Directory.Exists(destDir))
                 Directory.Delete(destDir, true);
             Directory.CreateDirectory(destDir);
@@ -95,10 +116,9 @@ namespace BuildTool
         private static void CopyMetaDataDll()
         {
             List<string> assemblies = GetMetaDataDllList();
-            var dir = new DirectoryInfo(Application.dataPath + META_DATA_DLL_PATH +
-                                        EditorUserBuildSettings.activeBuildTarget);
+            var dir = new DirectoryInfo(MetaDataDLLPath);
             var files = dir.GetFiles();
-            var destDir = Application.dataPath + META_DATA_DESTINATION_PATH;
+            var destDir = MetaDataDestinationPath;
             if (Directory.Exists(destDir))
                 Directory.Delete(destDir, true);
             Directory.CreateDirectory(destDir);
@@ -125,12 +145,60 @@ namespace BuildTool
             Debug.Log("copy meta data dll success!");
         }
 
+        /// <summary>
+        /// 热更代码中可能会调用到AOT中已经被裁剪的函数，需要检查一下
+        /// https://hybridclr.doc.code-philosophy.com/docs/basic/codestriping#%E6%A3%80%E6%9F%A5%E7%83%AD%E6%9B%B4%E6%96%B0%E4%BB%A3%E7%A0%81%E4%B8%AD%E6%98%AF%E5%90%A6%E5%BC%95%E7%94%A8%E4%BA%86%E8%A2%AB%E8%A3%81%E5%89%AA%E7%9A%84%E7%B1%BB%E5%9E%8B%E6%88%96%E5%87%BD%E6%95%B0
+        /// </summary>
+        private static bool CheckAccessMissingMetadata()
+        {
+            BuildTarget target = EditorUserBuildSettings.activeBuildTarget;
+            string aotDir = CurrPlatformBuildDataPath;
+            var checker = new MissingMetadataChecker(aotDir, new List<string>());
+
+            string hotUpdateDir = SettingsUtil.GetHotUpdateDllsOutputDirByTarget(target);
+            foreach (var dll in SettingsUtil.HotUpdateAssemblyFilesExcludePreserved)
+            {
+                string dllPath = $"{hotUpdateDir}/{dll}";
+                bool notAnyMissing = checker.Check(dllPath);
+                if (!notAnyMissing)
+                {
+                    Debug.LogError($"Update player failed!some hotUpdate dll:{dll} is using a stripped method or type in AOT dll!Please rebuild a player!");
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 如果是发包，需要拷贝Aot dll到BuildData文件夹下，为后续更新时的代码裁剪检查做准备
+        /// </summary>
+        private static void CopyAotDllsForStripCheck()
+        {
+            if (!Directory.Exists(BuildDataPath))
+                Directory.CreateDirectory(BuildDataPath);
+            var dir = new DirectoryInfo(MetaDataDLLPath);
+            var files = dir.GetFiles();
+            var destDir = CurrPlatformBuildDataPath;
+            if (Directory.Exists(destDir))
+                Directory.Delete(destDir, true);
+            Directory.CreateDirectory(destDir);
+            foreach (var file in files)
+            {
+                if (file.Extension == ".dll")
+                {
+                    var desPath = destDir + file.Name;
+                    file.CopyTo(desPath, true);
+                }
+            }
+        }
+
         //之所以采用读取C#文件的方式是因为如果直接读取代码中的列表会出现打包时更改了AOTGenericReferences.cs但Unity编译未完成导致
         //AOTGenericReferences中PatchedAOTAssemblyList还是代码修改前的数据的问题，是因为Unity还没有reload domain
         //https://docs.unity.cn/2023.2/Documentation/Manual/DomainReloading.html
         private static List<string> GetMetaDataDllList()
         {
-            var aotGenericRefPath = Application.dataPath + AOT_GENERIC_REFERENCES_PATH;
+            var aotGenericRefPath = AOTGenericReferencesPath;
             List<string> result = new List<string>();
             using (StreamReader reader = new StreamReader(aotGenericRefPath))
             {
@@ -194,6 +262,7 @@ namespace BuildTool
                 {
                 }
             }
+
             File.WriteAllText(RUN_TIME_INITIALIZE_ON_LOAD_METHOD_COLLECTION_PATH, json, Encoding.UTF8);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();

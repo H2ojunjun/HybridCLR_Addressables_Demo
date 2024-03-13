@@ -27,14 +27,14 @@ namespace BuildTool
         private static void BuildContentAndPlayerWithHybridCLR()
         {
             HybridHotUpdateEditorHelper.SetEnableHotUpdate(true);
-            HybridHotUpdateEditorHelper.BuildHotUpdateDlls();
+            HybridHotUpdateEditorHelper.BuildHotUpdateDlls(true);
             BuildContentAndPlayer();
         }
 
         [MenuItem("Build/UpdatePreviousBuild")]
         private static void UpdatePreviousPlayerWithHybridCLR()
         {
-            HybridHotUpdateEditorHelper.BuildHotUpdateDlls();
+            HybridHotUpdateEditorHelper.BuildHotUpdateDlls(false);
             UpdatePreviousPlayer();
         }
 
