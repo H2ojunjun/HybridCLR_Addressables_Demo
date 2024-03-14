@@ -34,3 +34,7 @@ Demo中Addressable使用的服务器是本地Hosting，需要开启，但可能�
 ![image](https://github.com/H2ojunjun/HybridCLR_Demo/assets/57307597/5a4ad381-498f-4a99-9343-101c43d15ee0)  
 这里假设热更的主要程序集名为GamePlay，如果有其他的热更程序集被其依赖，则需要添加到该列表中，如果这些被添加的程序集内部还有依赖，那也需要按依赖顺序写入列表  
 
+## Demo详解
+可以看看我在知乎上发的文章:
+https://zhuanlan.zhihu.com/p/686662466?
+
