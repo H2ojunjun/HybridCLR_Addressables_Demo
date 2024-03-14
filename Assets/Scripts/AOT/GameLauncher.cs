@@ -13,7 +13,7 @@ namespace AOT
     /// 用于启动游戏，执行版本检查，版本更新，加载程序集，进入游戏
     /// 错误处理是用的打印日志，正式上线的话需要一个错误处理系统来给玩家显示错误信息
     /// </summary>
-    public partial class GameLauncher : MonoBehaviour
+    public class GameLauncher : MonoBehaviour
     {
         #region Inner Class
         
@@ -103,7 +103,8 @@ namespace AOT
 
         private void Start()
         {
-            OptimizeHybridCLR();
+            if(enableHybridCLR)
+                HybridCLROptimizer.OptimizeHybridCLR();
             _launchCoroutine = StartCoroutine(Launch());
         }
 
