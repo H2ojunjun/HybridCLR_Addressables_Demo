@@ -179,7 +179,7 @@ namespace AOT
         /// <summary>
         /// 重新加载catalog
         /// Addressable初始化时热更新代码所对应的ScriptableObject的类型会被识别为System.Object，需要在热更新dll加载完后重新加载一下Addressable的Catalog
-        /// https://hybridclr.doc.code-philosophy.com/docs/help/commonerrors
+        /// https://hybridclr.doc.code-philosophy.com/docs/help/commonerrors#%E4%BD%BF%E7%94%A8addressable%E8%BF%9B%E8%A1%8C%E7%83%AD%E6%9B%B4%E6%96%B0%E6%97%B6%E5%8A%A0%E8%BD%BD%E8%B5%84%E6%BA%90%E5%87%BA%E7%8E%B0-unityengineaddressableassetsinvlidkeyexception-exception-of-type-unityengineaddressableassetsinvalidkeyexception-was-thrown-no-asset-found-with-for-key-xxxx-%E5%BC%82%E5%B8%B8
         /// </summary>
         /// <returns></returns>
         private IEnumerator ReloadAddressableCatalog()
