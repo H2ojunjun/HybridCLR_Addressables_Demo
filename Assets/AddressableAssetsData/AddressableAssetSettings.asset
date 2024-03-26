@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 5473932cdf88acc4784c880de9aee665
   m_currentHash:
     serializedVersion: 2
-    Hash: 09f2a4b20e1812c6c923cffb10daeae8
+    Hash: 00000000000000000000000000000000
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 1
   m_BundleLocalCatalog: 0
@@ -48,6 +48,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ae8e521b851919941b4d4b1d21790a4d, type: 2}
   - {fileID: 11400000, guid: 17d50e87eb4fe154c94acbcd26497abf, type: 2}
   - {fileID: 11400000, guid: 716876498c20bc64d8056094d016ad6c, type: 2}
+  - {fileID: 11400000, guid: ad4d7e6a96510c443b8b11df2a272bc7, type: 2}
+  - {fileID: 11400000, guid: 8b32c670689dce64484a67d49a087964, type: 2}
   m_BuildSettings:
     m_CompileScriptsInVirtualMode: 0
     m_CleanupStreamingAssetsAfterBuilds: 1
@@ -111,7 +113,7 @@ MonoBehaviour:
         m_SerializedData:
         - m_AssemblyName: mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
           m_ClassName: System.Int32
-          m_Data: 64064
+          m_Data: 59754
           m_Key: HostingServicePort
         - m_AssemblyName: mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
           m_ClassName: System.Int32
@@ -119,7 +121,7 @@ MonoBehaviour:
           m_Key: HostingServiceUploadSpeed
         - m_AssemblyName: mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
           m_ClassName: System.String
-          m_Data: ServerData/StandaloneWindows64
+          m_Data: ServerData/StandaloneWindows64;Library/com.unity.addressables/aa/Windows/StandaloneWindows64
           m_Key: ContentRoot
         - m_AssemblyName: mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
           m_ClassName: System.Boolean
