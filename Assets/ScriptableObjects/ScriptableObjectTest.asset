@@ -9,8 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5834b5087d578d24c926ce20cd31e6d6, type: 3}
-  m_Name: Content Update_ContentUpdateGroupSchema
+  m_Script: {fileID: 11500000, guid: 69a25b413ecbebd448a80e2f8386e0a9, type: 3}
+  m_Name: ScriptableObjectTest
   m_EditorClassIdentifier: 
-  m_Group: {fileID: 11400000, guid: 8b32c670689dce64484a67d49a087964, type: 2}
-  m_StaticContent: 0
+  intValue: 6

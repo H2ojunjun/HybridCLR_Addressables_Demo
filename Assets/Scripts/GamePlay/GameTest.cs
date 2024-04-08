@@ -98,10 +98,28 @@ namespace GamePlay
 
         #endregion
 
+        #region TestScriptableObject
+
+        private void TestScriptableObject()
+        {   
+            Debug.Log("ScriptableObjectTest Test");
+            var scriptableObj = Addressables.LoadAssetAsync<ScriptableObjectTest>(ScriptableObjectTest.TEST_OBJ_PATH).WaitForCompletion();
+            if (scriptableObj == null)
+            {
+                Debug.LogError($"Load ScriptableObject Failed,path:{ScriptableObjectTest.TEST_OBJ_PATH}");
+                return;
+            }
+            
+            Debug.Log($"ScriptableObjectTest Test intValue:{scriptableObj.intValue}");
+        }
+
+        #endregion
+        
         public void Test()
         {
             TestGenericType();
             TestPrefab();
+            TestScriptableObject();
         }
     }
 }

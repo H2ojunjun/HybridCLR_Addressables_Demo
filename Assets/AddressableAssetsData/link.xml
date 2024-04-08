@@ -3,6 +3,7 @@
     <type fullname="ConsoleToScreen" preserve="all" />
     <type fullname="GamePlay.GameMain" preserve="all" />
     <type fullname="GamePlay.PrefabTest" preserve="all" />
+    <type fullname="GamePlay.ScriptableObjectTest" preserve="all" />
   </assembly>
   <assembly fullname="Unity.Addressables, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" preserve="all">
     <type fullname="UnityEngine.AddressableAssets.Addressables" preserve="all" />
